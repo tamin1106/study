@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tamin의 스마트 암기 도구 (Direct Paste 지원)</title>
+    <title>Tamin의 스마트 암기 도구 (Pro Version)</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -31,16 +31,13 @@
         .study-btn { flex: 1; background: #4a90e2; color: white; padding: 8px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight:bold; display: none; }
         input[type="file"] { display: none; }
 
-        /* 모달 공통 스타일 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); color: white; justify-content: center; align-items: center; z-index: 1000; flex-direction: column; padding: 20px; box-sizing: border-box;}
         .close-btn { position: absolute; top: 20px; right: 30px; font-size: 40px; cursor: pointer; color: white; z-index: 1010; transition: transform 0.2s;}
 
-        /* 직접 입력(붙여넣기) 모달 전용 */
         .paste-modal-content { background: white; width: 90%; max-width: 500px; padding: 20px; border-radius: 16px; color: #333; display: flex; flex-direction: column; gap: 15px; }
         .paste-modal-content textarea { width: 100%; height: 250px; border: 1px solid #ddd; border-radius: 8px; padding: 10px; font-family: monospace; font-size: 14px; resize: none; box-sizing: border-box; }
         .save-btn { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; }
 
-        /* 학습 모달 (암기장/퀴즈) */
         .notebook { background: #eef1f5; width: 95%; max-width: 900px; height: 85vh; overflow-y: auto; border-radius: 20px; padding: 30px; box-sizing: border-box; }
         .note-item-block { background: white; border-radius: 16px; padding: 30px; margin-bottom: 25px; border-left: 8px solid #4a90e2; }
         .note-title { font-size: 26px; font-weight: 900; color: #111; margin-bottom: 20px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; line-height: 1.4; }
@@ -48,12 +45,24 @@
         .text-red { color: #e84118; font-weight: 900; }
         .text-blue { color: #0097e6; font-weight: 900; }
         .text-hl { background-color: #fbc531; color: #111; font-weight: 900; padding: 2px 6px; border-radius: 4px; }
+        .note-image { max-width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin: 15px 0; display: block; }
         
-        .card-container { perspective: 1000px; width: 100%; max-width: 600px; height: 350px; margin-bottom: 20px; }
-        .card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; cursor: pointer; }
+        /* 퀴즈 카드 스타일 업그레이드 */
+        .card-container { perspective: 1000px; width: 100%; max-width: 600px; min-height: 400px; margin-bottom: 20px; display: flex; align-items: stretch; }
+        .card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; cursor: pointer; display: flex; align-items: stretch;}
         .card-inner.is-flipped { transform: rotateY(180deg); }
-        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; justify-content: center; align-items: center; border-radius: 20px; font-size: 24px; font-weight: bold; padding: 40px; box-sizing: border-box; background: white; color: #333; box-shadow: 0 10px 30px rgba(0,0,0,0.2); flex-direction: column; line-height: 1.5;}
+        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; justify-content: center; align-items: center; border-radius: 20px; font-size: 22px; font-weight: bold; padding: 40px; box-sizing: border-box; background: white; color: #333; box-shadow: 0 10px 30px rgba(0,0,0,0.2); flex-direction: column; line-height: 1.5; overflow-y: auto;}
         .card-back { transform: rotateY(180deg); background: #f8fbff; border: 4px solid var(--primary); }
+        
+        .quiz-type-badge { font-size: 13px; color: white; background: #888; padding: 4px 10px; border-radius: 20px; position: absolute; top: 20px; left: 20px; font-weight: bold; }
+        .quiz-type-mcq { background: #4caf50; }
+        .quiz-type-desc { background: #9c27b0; }
+        
+        /* 객관식 선지 버튼 스타일 */
+        .mcq-options { display: flex; flex-direction: column; gap: 10px; margin-top: 25px; width: 100%; }
+        .mcq-btn { width: 100%; padding: 15px; background: #f8f9fa; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; cursor: pointer; text-align: left; transition: all 0.2s; font-weight: 600; color: #333; }
+        .mcq-btn:hover { background: #e3f2fd; border-color: #4a90e2; }
+        
         .nav-btns { display: flex; gap: 20px; }
         .nav-btns button { padding: 15px 35px; border-radius: 12px; border: none; cursor: pointer; background: var(--primary); color: white; font-weight: 900; font-size: 18px;}
 
@@ -83,16 +92,20 @@
     <span class="close-btn" onclick="closeStudy()">&times;</span>
     <div id="modeTitle" style="margin-bottom: 15px; font-size: 20px; color: #ddd; font-weight:900;"></div>
     <div id="noteDisplay" class="notebook" style="display: none;"></div>
+    
     <div id="flashcardDisplay" class="card-container" style="display: none;">
         <div class="card-inner" id="cardInner" onclick="flipCard()">
             <div class="card-face card-front">
-                <div id="cardFrontContent"></div>
+                <div id="quizBadge" class="quiz-type-badge">Q. 문제</div>
+                <div id="cardFrontContent" style="width: 100%;"></div>
             </div>
             <div class="card-face card-back">
-                <div id="cardBackContent"></div>
+                <div class="quiz-type-badge" style="background:#4a90e2;">A. 정답/해설</div>
+                <div id="cardBackContent" style="width: 100%;"></div>
             </div>
         </div>
     </div>
+    
     <div class="nav-btns" id="cardNav" style="display: none;">
         <button onclick="prevItem()">◀ 이전</button>
         <button onclick="nextItem()">다음 ▶</button>
@@ -187,7 +200,6 @@
         }
     }
 
-    // 파일 로드
     function loadFile(event, name, type) {
         const file = event.target.files[0];
         if (!file) return;
@@ -196,7 +208,6 @@
         reader.readAsText(file);
     }
 
-    // 붙여넣기 모달 열기
     function openPasteModal(name, type) {
         targetSubject = name;
         targetType = type;
@@ -207,7 +218,6 @@
 
     function closePasteModal() { document.getElementById('pasteModal').style.display = 'none'; }
 
-    // 붙여넣은 데이터 저장
     function savePastedData() {
         const text = document.getElementById('pasteTextarea').value.trim();
         if (!text) return;
@@ -215,7 +225,6 @@
         closePasteModal();
     }
 
-    // 공통 데이터 저장 처리
     function handleDataSave(name, type, rawData) {
         try {
             const parsed = JSON.parse(rawData);
@@ -226,10 +235,10 @@
         } catch (e) { alert("올바른 JSON 형식이 아닙니다. 코드를 전체 복사했는지 확인해 주세요."); }
     }
 
-    // 학습 기능 (노트/퀴즈)
     function parseText(text) {
         if(!text) return "";
-        return text.replace(/\{빨강:(.*?)\}/g, '<span class="text-red">$1</span>')
+        return text.replace(/\{이미지:(.*?)\}/g, '<img src="$1" class="note-image">')
+                   .replace(/\{빨강:(.*?)\}/g, '<span class="text-red">$1</span>')
                    .replace(/\{파랑:(.*?)\}/g, '<span class="text-blue">$1</span>')
                    .replace(/\{형광:(.*?)\}/g, '<span class="text-hl">$1</span>')
                    .replace(/\n/g, '<br>');
@@ -240,6 +249,7 @@
         currentIndex = 0;
         document.getElementById('studyArea').style.display = 'flex';
         document.getElementById('modeTitle').textContent = `[${name}] ${type==='memo'?'노트':'퀴즈'}`;
+        
         if (type === 'memo') {
             document.getElementById('flashcardDisplay').style.display = 'none';
             document.getElementById('cardNav').style.display = 'none';
@@ -249,7 +259,7 @@
             document.getElementById('progress').style.display = 'none';
         } else {
             document.getElementById('noteDisplay').style.display = 'none';
-            document.getElementById('flashcardDisplay').style.display = 'block';
+            document.getElementById('flashcardDisplay').style.display = 'flex';
             document.getElementById('cardNav').style.display = 'flex';
             document.getElementById('progress').style.display = 'block';
             showCardItem();
@@ -259,10 +269,36 @@
     function showCardItem() {
         const item = currentData[currentIndex];
         document.getElementById('cardInner').classList.remove('is-flipped');
-        document.getElementById('cardFrontContent').innerHTML = parseText(item.question);
+        
+        let frontHTML = `<div>${parseText(item.question)}</div>`;
+        let badge = document.getElementById('quizBadge');
+        
+        // 문제 유형에 따른 UI 변경
+        if (item.type === 'multiple_choice' && item.options) {
+            badge.textContent = '🔢 객관식';
+            badge.className = 'quiz-type-badge quiz-type-mcq';
+            frontHTML += `<div class="mcq-options">`;
+            item.options.forEach((opt, idx) => {
+                // 선지 버튼 생성. 클릭하면 카드가 뒤집힘 (flipCard가 상위에서 작동)
+                frontHTML += `<button class="mcq-btn">${idx + 1}. ${parseText(opt)}</button>`;
+            });
+            frontHTML += `</div>`;
+            frontHTML += `<div style="margin-top:20px; font-size:14px; color:#aaa; font-weight:normal;">(정답을 누르면 결과가 공개됩니다)</div>`;
+        } else if (item.type === 'descriptive') {
+            badge.textContent = '✍️ 서술형';
+            badge.className = 'quiz-type-badge quiz-type-desc';
+            frontHTML += `<div style="margin-top:30px; font-size:15px; color:#888; font-weight:normal; border-top:1px dashed #ccc; padding-top:20px;">💡 힌트: 머릿속으로 전체 문장을 정리한 후 화면을 탭하세요.</div>`;
+        } else {
+            badge.textContent = '⚡ 단답형';
+            badge.className = 'quiz-type-badge';
+            frontHTML += `<div style="margin-top:30px; font-size:14px; color:#ccc; font-weight:normal;">(화면을 탭하면 정답 확인)</div>`;
+        }
+
+        document.getElementById('cardFrontContent').innerHTML = frontHTML;
         document.getElementById('cardBackContent').innerHTML = parseText(item.answer);
         document.getElementById('progress').textContent = `[ ${currentIndex + 1} / ${currentData.length} ]`;
     }
+
     function flipCard() { document.getElementById('cardInner').classList.toggle('is-flipped'); }
     function nextItem() { if (currentIndex < currentData.length - 1) { currentIndex++; showCardItem(); } }
     function prevItem() { if (currentIndex > 0) { currentIndex--; showCardItem(); } }
