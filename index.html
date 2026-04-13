@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tamin의 스마트 암기 도구 (Firebase 연동)</title>
+    <title>Tamin의 스마트 암기 도구 (Pro Version)</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -14,82 +14,120 @@
         .container { background: var(--white); padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); width: 100%; max-width: 500px; }
         h2 { text-align: center; color: #333; margin-bottom: 25px; }
         
-        /* 입력부 & 과목 리스트 */
         .input-group { display: flex; gap: 8px; margin-bottom: 25px; }
         input[type="text"] { flex: 1; padding: 12px; border: 2px solid #eef0f2; border-radius: 10px; font-size: 15px; outline: none; }
         input[type="text"]:focus { border-color: var(--primary); }
         .add-btn { padding: 12px 20px; background: var(--primary); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; }
+        
         .subject-list { list-style: none; padding: 0; }
         .subject-item { background: #fdfdfd; border: 1px solid #eee; margin-bottom: 15px; padding: 15px; border-radius: 12px; }
         .subject-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .subject-name { font-weight: 700; font-size: 17px; color: #222; }
-        .delete-btn { background: #ffeded; color: #ff5c5c; border: none; padding: 4px 8px; border-radius: 5px; cursor: pointer; font-size: 12px; }
+        .subject-name { font-weight: 800; font-size: 18px; color: #222; }
+        .delete-btn { background: #ffeded; color: #ff5c5c; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight:bold; }
+        
         .action-group { display: flex; gap: 5px; margin-bottom: 5px; }
-        .file-label { flex: 1; background: #f0f7ff; color: #4a90e2; padding: 8px; text-align: center; border-radius: 8px; font-size: 13px; cursor: pointer; border: 1px dashed #4a90e2; }
-        .study-btn { flex: 1; background: #4a90e2; color: white; padding: 8px; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; display: none; }
+        .file-label { flex: 1; background: #f0f7ff; color: #4a90e2; padding: 8px; text-align: center; border-radius: 8px; font-size: 13px; cursor: pointer; border: 1px dashed #4a90e2; font-weight:bold; }
+        .study-btn { flex: 1; background: #4a90e2; color: white; padding: 8px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight:bold; display: none; }
         input[type="file"] { display: none; }
 
-        /* 학습 모달 기본 */
         #studyArea { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); color: white; justify-content: center; align-items: center; z-index: 1000; flex-direction: column; padding: 20px; box-sizing: border-box;}
-        .close-btn { position: absolute; top: 20px; right: 30px; font-size: 35px; cursor: pointer; color: white; z-index: 1010; }
-        
-        /* 1. 필기 노트 (암기장) 스타일 */
-        .notebook { background: #fff; color: #333; width: 100%; max-width: 500px; height: 70vh; overflow-y: auto; border-radius: 10px; padding: 30px 20px 30px 40px; box-sizing: border-box; font-size: 16px; background-image: linear-gradient(#e5e5e5 1px, transparent 1px); background-size: 100% 32px; line-height: 32px; border-left: 4px solid #ff7675; box-shadow: 5px 5px 15px rgba(0,0,0,0.3); }
-        .note-title { font-size: 20px; font-weight: 800; color: #2d3436; margin-bottom: 5px; margin-top: 15px; border-bottom: 2px solid #333; display: inline-block; line-height: 1.2; }
-        .note-content { margin-bottom: 20px; }
+        .close-btn { position: absolute; top: 20px; right: 30px; font-size: 40px; cursor: pointer; color: white; z-index: 1010; transition: transform 0.2s;}
+        .close-btn:hover { transform: scale(1.2); }
 
-        /* 2. 개념 퀴즈 (플래시카드 3D 애니메이션) 스타일 */
-        .card-container { perspective: 1000px; width: 100%; max-width: 400px; height: 250px; margin-bottom: 20px; }
+        /* ★ 새로워진 암기장 (노트) 스타일 ★ */
+        .notebook { 
+            background: #eef1f5; /* 눈이 편안한 옅은 회색 배경 */
+            width: 95%; /* 화면 꽉 차게 확장 */
+            max-width: 900px; 
+            height: 85vh; 
+            overflow-y: auto; 
+            border-radius: 20px; 
+            padding: 30px; 
+            box-sizing: border-box; 
+            box-shadow: 0 15px 40px rgba(0,0,0,0.5); 
+        }
+        
+        /* 개념별로 시각적 분리를 위한 카드 블록 */
+        .note-item-block {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-left: 8px solid #4a90e2; /* 좌측 포인트 컬러 */
+        }
+
+        .note-title { 
+            font-size: 26px; /* 글자 크기 대폭 확대 */
+            font-weight: 900; 
+            color: #111; 
+            margin-bottom: 20px; 
+            border-bottom: 2px solid #f0f0f0; 
+            padding-bottom: 15px; 
+            line-height: 1.4; 
+        }
+
+        .note-content { 
+            font-size: 19px; /* 본문 글자 크기 확대 */
+            font-weight: 500; 
+            color: #333; 
+            line-height: 1.8; /* 줄 간격 확대 (가독성 향상) */
+        }
+
+        /* 강조 색상 클래스 (더 선명하게) */
+        .text-red { color: #e84118; font-weight: 900; }
+        .text-blue { color: #0097e6; font-weight: 900; }
+        .text-hl { background-color: #fbc531; color: #111; font-weight: 900; padding: 2px 6px; border-radius: 4px; }
+        
+        /* 추가된 이미지 태그 스타일 */
+        .note-image { max-width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin: 15px 0; display: block; }
+
+        /* 2. 개념 퀴즈 스타일 (카드 크기 확장) */
+        .card-container { perspective: 1000px; width: 100%; max-width: 600px; height: 350px; margin-bottom: 20px; }
         .card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; cursor: pointer; }
         .card-inner.is-flipped { transform: rotateY(180deg); }
-        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; justify-content: center; align-items: center; border-radius: 20px; font-size: 20px; font-weight: bold; padding: 30px; box-sizing: border-box; background: white; color: #333; box-shadow: 0 5px 15px rgba(0,0,0,0.2); flex-direction: column;}
-        .card-back { transform: rotateY(180deg); background: #f8fbff; border: 3px solid var(--primary); }
-        .card-label { font-size: 12px; color: #888; position: absolute; top: 15px; left: 15px; font-weight: normal; }
+        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; justify-content: center; align-items: center; border-radius: 20px; font-size: 24px; font-weight: bold; padding: 40px; box-sizing: border-box; background: white; color: #333; box-shadow: 0 10px 30px rgba(0,0,0,0.2); flex-direction: column; line-height: 1.5;}
+        .card-back { transform: rotateY(180deg); background: #f8fbff; border: 4px solid var(--primary); }
+        .card-label { font-size: 14px; color: #888; position: absolute; top: 20px; left: 20px; font-weight: normal; }
+        
         .nav-btns { display: flex; gap: 20px; }
-        .nav-btns button { padding: 10px 25px; border-radius: 10px; border: none; cursor: pointer; background: var(--primary); color: white; font-weight: bold; font-size: 16px;}
+        .nav-btns button { padding: 15px 35px; border-radius: 12px; border: none; cursor: pointer; background: var(--primary); color: white; font-weight: 900; font-size: 18px;}
         .nav-btns button:hover { background: #357abd; }
 
-        /* 강조 색상 클래스 */
-        .text-red { color: #d63031; font-weight: bold; }
-        .text-blue { color: #0984e3; font-weight: bold; }
-        .text-hl { background-color: #ffeaa7; font-weight: bold; padding: 0 4px; border-radius: 3px; }
+        #loadingState { text-align: center; color: #888; font-size: 14px; margin-bottom: 10px; display: none; font-weight:bold;}
 
-        /* 로딩 상태 */
-        #loadingState { text-align: center; color: #888; font-size: 14px; margin-bottom: 10px; display: none; }
-
-        /* ================= AI 튜터 (Gemini) UI ================= */
-        .ai-tutor-btn { position: fixed; bottom: 30px; right: 30px; background: #2b3137; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 100; transition: transform 0.2s; border: none; }
+        /* AI 튜터 (Gemini) UI */
+        .ai-tutor-btn { position: fixed; bottom: 30px; right: 30px; background: #2b3137; color: white; width: 65px; height: 65px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 28px; cursor: pointer; box-shadow: 0 5px 20px rgba(0,0,0,0.3); z-index: 100; transition: transform 0.2s; border: none; }
         .ai-tutor-btn:hover { transform: scale(1.1); background: #1a1e22; }
-        
-        .chat-window { display: none; position: fixed; bottom: 100px; right: 30px; width: 350px; height: 500px; background: white; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); z-index: 100; flex-direction: column; overflow: hidden; border: 1px solid #ddd; }
-        .chat-header { background: #2b3137; color: white; padding: 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-        .chat-close { cursor: pointer; font-size: 20px; }
-        .api-key-section { padding: 10px; background: #f8f9fa; border-bottom: 1px solid #eee; display: flex; gap: 5px; }
-        .api-key-section input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 12px; }
-        .chat-body { flex: 1; padding: 15px; overflow-y: auto; background: #fdfdfd; display: flex; flex-direction: column; gap: 10px; font-size: 14px; line-height: 1.5; }
-        .msg { max-width: 80%; padding: 10px 14px; border-radius: 12px; word-break: break-all; }
+        .chat-window { display: none; position: fixed; bottom: 110px; right: 30px; width: 380px; height: 550px; background: white; border-radius: 16px; box-shadow: 0 15px 40px rgba(0,0,0,0.2); z-index: 100; flex-direction: column; overflow: hidden; border: 1px solid #ddd; }
+        .chat-header { background: #2b3137; color: white; padding: 15px 20px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; font-size: 16px;}
+        .chat-close { cursor: pointer; font-size: 24px; }
+        .api-key-section { padding: 10px; background: #f8f9fa; border-bottom: 1px solid #eee; display: flex; }
+        .api-key-section input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; }
+        .chat-body { flex: 1; padding: 20px; overflow-y: auto; background: #fdfdfd; display: flex; flex-direction: column; gap: 12px; font-size: 15px; line-height: 1.6; }
+        .msg { max-width: 85%; padding: 12px 16px; border-radius: 14px; word-break: break-all; }
         .msg.user { align-self: flex-end; background: #4a90e2; color: white; border-bottom-right-radius: 2px; }
-        .msg.bot { align-self: flex-start; background: #f1f3f5; color: #333; border-bottom-left-radius: 2px; }
-        .chat-input-area { display: flex; padding: 10px; background: white; border-top: 1px solid #eee; gap: 8px; }
-        .chat-input-area input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; outline: none; }
-        .chat-input-area button { padding: 10px 15px; background: #4a90e2; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .msg.bot { align-self: flex-start; background: #f1f3f5; color: #222; border-bottom-left-radius: 2px; }
+        .chat-input-area { display: flex; padding: 15px; background: white; border-top: 1px solid #eee; gap: 10px; }
+        .chat-input-area input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; outline: none; font-size:15px;}
+        .chat-input-area button { padding: 12px 20px; background: #4a90e2; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size:15px;}
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>📚 클라우드 학습 관리자</h2>
-    <div id="loadingState">🔄 클라우드 데이터 불러오는 중...</div>
+    <h2>🚀 클라우드 학습 관리자</h2>
+    <div id="loadingState">🔄 클라우드 데이터 동기화 중...</div>
     <div class="input-group">
-        <input type="text" id="subjectInput" placeholder="과목 입력 (예: 물리, 영어)" onkeypress="if(event.key==='Enter')addSubject()">
-        <button class="add-btn" onclick="addSubject()">추가</button>
+        <input type="text" id="subjectInput" placeholder="과목 입력 (예: 지구과학)" onkeypress="if(event.key==='Enter')addSubject()">
+        <button class="add-btn" onclick="addSubject()">과목 추가</button>
     </div>
     <ul class="subject-list" id="subjectList"></ul>
 </div>
 
 <div id="studyArea">
     <span class="close-btn" onclick="closeStudy()">&times;</span>
-    <div id="modeTitle" style="margin-bottom: 15px; font-size: 16px; color: #ddd; font-weight:bold;"></div>
+    <div id="modeTitle" style="margin-bottom: 15px; font-size: 20px; color: #ddd; font-weight:900;"></div>
     
     <div id="noteDisplay" class="notebook" style="display: none;"></div>
 
@@ -107,32 +145,32 @@
     </div>
     
     <div class="nav-btns" id="cardNav" style="display: none;">
-        <button onclick="prevItem()">이전</button>
-        <button onclick="nextItem()">다음</button>
+        <button onclick="prevItem()">◀ 이전</button>
+        <button onclick="nextItem()">다음 ▶</button>
     </div>
-    <div id="progress" style="margin-top: 15px; font-size: 14px;"></div>
+    <div id="progress" style="margin-top: 20px; font-size: 16px; font-weight:bold; letter-spacing: 2px;"></div>
 </div>
 
 <button class="ai-tutor-btn" onclick="toggleChat()">🤖</button>
 <div class="chat-window" id="chatWindow">
     <div class="chat-header">
-        <span>🤖 질문 튜터 (Gemini)</span>
+        <span>🤖 AI 질문 튜터</span>
         <span class="chat-close" onclick="toggleChat()">&times;</span>
     </div>
     <div class="api-key-section">
-        <input type="password" id="geminiApiKey" placeholder="Gemini API Key를 입력하세요">
+        <input type="password" id="geminiApiKey" placeholder="Gemini API Key 입력">
     </div>
     <div class="chat-body" id="chatBody">
-        <div class="msg bot">안녕하세요! 공부하다 모르는 개념이나 문제가 있다면 무엇이든 물어보세요. (사용 전 API 키를 입력해주세요)</div>
+        <div class="msg bot">공부하다 막히는 부분이 있다면 언제든 물어보세요!</div>
     </div>
     <div class="chat-input-area">
-        <input type="text" id="chatMessage" placeholder="질문을 입력하세요..." onkeypress="if(event.key==='Enter')sendMessage()">
+        <input type="text" id="chatMessage" placeholder="질문 입력..." onkeypress="if(event.key==='Enter')sendMessage()">
         <button onclick="sendMessage()">전송</button>
     </div>
 </div>
 
 <script>
-    // ================= Firebase 초기화 및 설정 =================
+    // Firebase 초기화
     const firebaseConfig = {
         apiKey: "AIzaSyCTUv3jOEX_SNROCR5s0r3_q9QoZ1aW91w",
         authDomain: "study-97499.firebaseapp.com",
@@ -144,11 +182,8 @@
         measurementId: "G-NB1DLK7RBG"
     };
 
-    // Firebase 앱 초기화
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
-    
-    // 데이터 저장 경로 (tamin_study_data 라는 이름 아래에 저장)
     const dbRef = database.ref('tamin_study_data/subjects');
 
     let subjects = {}; 
@@ -156,50 +191,36 @@
     let currentIndex = 0;
     let currentMode = '';
 
-    // ================= 데이터 연동 로직 =================
-    // 1. 페이지 켜질 때 Firebase에서 데이터 불러오기
     document.getElementById('loadingState').style.display = 'block';
     dbRef.once('value').then((snapshot) => {
         document.getElementById('loadingState').style.display = 'none';
-        if (snapshot.exists()) {
-            subjects = snapshot.val(); // 클라우드에 데이터가 있으면 덮어쓰기
-        } else {
-            subjects = {}; // 없으면 빈 상태
-        }
+        if (snapshot.exists()) { subjects = snapshot.val(); } else { subjects = {}; }
         renderList();
     }).catch((error) => {
-        console.error("데이터를 불러오는데 실패했습니다.", error);
         document.getElementById('loadingState').textContent = "⚠️ 데이터 로드 실패";
     });
 
-    // 2. 데이터가 변경될 때마다 Firebase에 저장하는 함수
     function saveToFirebase() {
-        dbRef.set(subjects)
-            .then(() => console.log("Firebase 저장 완료!"))
-            .catch((error) => alert("저장 실패: " + error.message));
+        dbRef.set(subjects).catch((error) => alert("저장 실패: " + error.message));
     }
 
-    // ================= 핵심 앱 기능 =================
     function addSubject() {
         const input = document.getElementById('subjectInput');
         const name = input.value.trim();
         if (!name) return;
-        
         if (!subjects[name]) {
             subjects[name] = { memo: null, quiz: null };
             renderList();
-            saveToFirebase(); // 추가 후 클라우드 저장
-        } else {
-            alert("이미 존재하는 과목입니다.");
-        }
+            saveToFirebase();
+        } else { alert("이미 존재하는 과목입니다."); }
         input.value = "";
     }
 
     function deleteSubject(name) { 
-        if(confirm(`'${name}' 과목과 안의 데이터를 정말 삭제하시겠습니까?`)) {
+        if(confirm(`'${name}' 과목을 삭제하시겠습니까?`)) {
             delete subjects[name]; 
             renderList(); 
-            saveToFirebase(); // 삭제 후 클라우드 저장
+            saveToFirebase(); 
         }
     }
 
@@ -210,15 +231,13 @@
         reader.onload = function(e) {
             try {
                 subjects[subjectName][type] = JSON.parse(e.target.result);
-                alert(`${subjectName} - ${type === 'memo' ? '암기장' : '개념 퀴즈'}가 클라우드에 저장되었습니다!`);
+                alert(`저장 성공! 클라우드에 연동되었습니다.`);
                 updateStudyButtons(subjectName);
-                saveToFirebase(); // 파일 업로드 시 클라우드 저장 (다음부터 업로드 불필요)
-            } catch (err) {
-                alert("JSON 파일 형식이 올바르지 않습니다.");
-            }
+                saveToFirebase();
+            } catch (err) { alert("JSON 파일 형식이 올바르지 않습니다."); }
         };
         reader.readAsText(file);
-        event.target.value = ''; // 같은 파일 재업로드 버그 방지
+        event.target.value = ''; 
     }
 
     function renderList() {
@@ -227,10 +246,8 @@
         for (let name in subjects) {
             const li = document.createElement('li');
             li.className = 'subject-item';
-            
-            // 데이터가 이미 있으면 업로드 버튼을 초록색(완료) 느낌으로 텍스트 변경
-            const memoLabel = subjects[name].memo ? "✅ 암기장 재업로드" : "📂 암기장 업로드";
-            const quizLabel = subjects[name].quiz ? "✅ 개념 퀴즈 재업로드" : "📝 퀴즈 업로드";
+            const memoLabel = subjects[name].memo ? "✅ 암기장 업데이트" : "📂 암기장 업로드";
+            const quizLabel = subjects[name].quiz ? "✅ 퀴즈 업데이트" : "📝 퀴즈 업로드";
 
             li.innerHTML = `
                 <div class="subject-header">
@@ -238,8 +255,8 @@
                     <button class="delete-btn" onclick="deleteSubject('${name}')">삭제</button>
                 </div>
                 <div class="action-group">
-                    <label class="file-label" style="${subjects[name].memo ? 'border-style:solid;' : ''}">${memoLabel} <input type="file" onchange="loadFile(event, '${name}', 'memo')" accept=".json"></label>
-                    <label class="file-label" style="${subjects[name].quiz ? 'border-style:solid;' : ''}">${quizLabel} <input type="file" onchange="loadFile(event, '${name}', 'quiz')" accept=".json"></label>
+                    <label class="file-label" style="${subjects[name].memo ? 'border-style:solid; background:#e3f2fd;' : ''}">${memoLabel} <input type="file" onchange="loadFile(event, '${name}', 'memo')" accept=".json"></label>
+                    <label class="file-label" style="${subjects[name].quiz ? 'border-style:solid; background:#e3f2fd;' : ''}">${quizLabel} <input type="file" onchange="loadFile(event, '${name}', 'quiz')" accept=".json"></label>
                 </div>
                 <div class="action-group">
                     <button id="btn-memo-${name}" class="study-btn" style="background:#00b894" onclick="startStudy('${name}', 'memo')">📖 노트 펴기</button>
@@ -256,10 +273,11 @@
         if (subjects[name].quiz) document.getElementById(`btn-quiz-${name}`).style.display = 'block';
     }
 
-    // ================= 학습 화면(UI/UX) 로직 =================
+    // ★ 업그레이드된 파서 (이미지 지원 추가) ★
     function parseText(text) {
         if(!text) return "";
         return text
+            .replace(/\{이미지:(.*?)\}/g, '<img src="$1" class="note-image">') // 이미지 파싱 추가
             .replace(/\{빨강:(.*?)\}/g, '<span class="text-red">$1</span>')
             .replace(/\{파랑:(.*?)\}/g, '<span class="text-blue">$1</span>')
             .replace(/\{형광:(.*?)\}/g, '<span class="text-hl">$1</span>')
@@ -272,7 +290,7 @@
         currentIndex = 0;
         
         document.getElementById('studyArea').style.display = 'flex';
-        document.getElementById('modeTitle').textContent = type === 'memo' ? `[${name}] 필기 노트` : `[${name}] 개념 퀴즈 (플래시카드)`;
+        document.getElementById('modeTitle').textContent = type === 'memo' ? `📖 [${name}] 핵심 요약 노트` : `🧠 [${name}] 플래시카드`;
 
         if (type === 'memo') {
             document.getElementById('flashcardDisplay').style.display = 'none';
@@ -282,10 +300,13 @@
             noteArea.style.display = 'block';
             noteArea.innerHTML = ""; 
 
+            // 개념 블록 렌더링
             currentData.forEach(item => {
                 noteArea.innerHTML += `
-                    <div class="note-title">${parseText(item.title)}</div>
-                    <div class="note-content">${parseText(item.content)}</div>
+                    <div class="note-item-block">
+                        <div class="note-title">${parseText(item.title)}</div>
+                        <div class="note-content">${parseText(item.content)}</div>
+                    </div>
                 `;
             });
         } else {
@@ -312,7 +333,7 @@
     function updateCardText(item) {
         document.getElementById('cardFrontContent').innerHTML = parseText(item.question);
         document.getElementById('cardBackContent').innerHTML = parseText(item.answer);
-        document.getElementById('progress').textContent = `${currentIndex + 1} / ${currentData.length}`;
+        document.getElementById('progress').textContent = `[ ${currentIndex + 1} / ${currentData.length} ]`;
     }
 
     function flipCard() { document.getElementById('cardInner').classList.toggle('is-flipped'); }
@@ -320,7 +341,7 @@
     function prevItem() { if (currentIndex > 0) { currentIndex--; showCardItem(); } }
     function closeStudy() { document.getElementById('studyArea').style.display = 'none'; document.getElementById('noteDisplay').innerHTML = ""; }
 
-    // ================= AI 튜터 (Gemini) 통신 로직 =================
+    // Gemini API 
     function toggleChat() {
         const chat = document.getElementById('chatWindow');
         chat.style.display = chat.style.display === 'flex' ? 'none' : 'flex';
@@ -348,7 +369,7 @@
         
         const loadingId = "loading-" + Date.now();
         const chatBody = document.getElementById('chatBody');
-        chatBody.innerHTML += `<div class="msg bot" id="${loadingId}">답변을 생각하는 중... 🤔</div>`;
+        chatBody.innerHTML += `<div class="msg bot" id="${loadingId}">답변 생성 중... 🤔</div>`;
         chatBody.scrollTop = chatBody.scrollHeight;
 
         try {
@@ -364,11 +385,11 @@
             if (response.ok) {
                 appendMessage('bot', data.candidates[0].content.parts[0].text);
             } else {
-                appendMessage('bot', `⚠️ 에러 발생: ${data.error.message}`);
+                appendMessage('bot', `에러: ${data.error.message}`);
             }
         } catch (error) {
             document.getElementById(loadingId).remove();
-            appendMessage('bot', "⚠️ 통신 중 문제가 발생했습니다.");
+            appendMessage('bot', "통신 오류가 발생했습니다.");
         }
     }
 </script>
