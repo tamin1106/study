@@ -47,7 +47,6 @@
         .text-hl { background-color: #fbc531; color: #111; font-weight: 900; padding: 2px 6px; border-radius: 4px; }
         .note-image { max-width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin: 15px 0; display: block; }
         
-        /* 퀴즈 카드 스타일 업그레이드 */
         .card-container { perspective: 1000px; width: 100%; max-width: 600px; min-height: 400px; margin-bottom: 20px; display: flex; align-items: stretch; }
         .card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; cursor: pointer; display: flex; align-items: stretch;}
         .card-inner.is-flipped { transform: rotateY(180deg); }
@@ -58,7 +57,6 @@
         .quiz-type-mcq { background: #4caf50; }
         .quiz-type-desc { background: #9c27b0; }
         
-        /* 객관식 선지 버튼 스타일 */
         .mcq-options { display: flex; flex-direction: column; gap: 10px; margin-top: 25px; width: 100%; }
         .mcq-btn { width: 100%; padding: 15px; background: #f8f9fa; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; cursor: pointer; text-align: left; transition: all 0.2s; font-weight: 600; color: #333; }
         .mcq-btn:hover { background: #e3f2fd; border-color: #4a90e2; }
@@ -273,13 +271,11 @@
         let frontHTML = `<div>${parseText(item.question)}</div>`;
         let badge = document.getElementById('quizBadge');
         
-        // 문제 유형에 따른 UI 변경
         if (item.type === 'multiple_choice' && item.options) {
             badge.textContent = '🔢 객관식';
             badge.className = 'quiz-type-badge quiz-type-mcq';
             frontHTML += `<div class="mcq-options">`;
             item.options.forEach((opt, idx) => {
-                // 선지 버튼 생성. 클릭하면 카드가 뒤집힘 (flipCard가 상위에서 작동)
                 frontHTML += `<button class="mcq-btn">${idx + 1}. ${parseText(opt)}</button>`;
             });
             frontHTML += `</div>`;
@@ -304,24 +300,42 @@
     function prevItem() { if (currentIndex > 0) { currentIndex--; showCardItem(); } }
     function closeStudy() { document.getElementById('studyArea').style.display = 'none'; }
 
-    // AI 튜터 
+    // AI 튜터 (에러 메시지 표시 기능 추가)
     function toggleChat() { const c = document.getElementById('chatWindow'); c.style.display = c.style.display==='flex'?'none':'flex'; }
+    
     async function sendMessage() {
-        const key = document.getElementById('geminiApiKey').value;
-        const msg = document.getElementById('chatMessage').value;
+        const key = document.getElementById('geminiApiKey').value.trim(); // 공백 제거
+        const msg = document.getElementById('chatMessage').value.trim();
         if(!key || !msg) return;
+        
         const body = document.getElementById('chatBody');
         body.innerHTML += `<div class="msg user">${msg}</div>`;
         document.getElementById('chatMessage').value = "";
+        
+        const loadingId = "loading-" + Date.now();
+        body.innerHTML += `<div class="msg bot" id="${loadingId}">답변 생성 중... 🤔</div>`;
+        body.scrollTop = body.scrollHeight;
+
         try {
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({contents: [{parts: [{text: msg}]}]})
             });
             const data = await res.json();
-            body.innerHTML += `<div class="msg bot">${data.candidates[0].content.parts[0].text.replace(/\n/g, '<br>')}</div>`;
+            
+            document.getElementById(loadingId).remove();
+
+            if (res.ok) {
+                body.innerHTML += `<div class="msg bot">${data.candidates[0].content.parts[0].text.replace(/\n/g, '<br>')}</div>`;
+            } else {
+                let errorReason = data.error.message;
+                body.innerHTML += `<div class="msg bot">⚠️ API 에러: ${errorReason}</div>`;
+            }
             body.scrollTop = body.scrollHeight;
-        } catch(e) { body.innerHTML += `<div class="msg bot">오류 발생</div>`; }
+        } catch(e) { 
+            document.getElementById(loadingId).remove();
+            body.innerHTML += `<div class="msg bot">⚠️ 인터넷 통신 오류가 발생했습니다. 와이파이나 데이터를 확인해주세요.</div>`; 
+        }
     }
 </script>
 
