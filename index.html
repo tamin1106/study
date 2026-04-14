@@ -3,15 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tamin의 스마트 암기 도구 (Chemistry Edition)</title>
+    <title>Tamin의 스마트 암기 도구 (전과목 Edition)</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
     <style>
         :root { --primary: #4a90e2; --bg: #f0f2f5; --white: #ffffff; }
         body { font-family: 'Pretendard', sans-serif; background-color: var(--bg); display: flex; justify-content: center; padding: 40px 20px; margin: 0; }
-        .container { background: var(--white); padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); width: 100%; max-width: 500px; }
+        .container { background: var(--white); padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); width: 100%; max-width: 550px; }
         h2 { text-align: center; color: #333; margin-bottom: 25px; }
         
         .input-group { display: flex; gap: 8px; margin-bottom: 25px; }
@@ -20,38 +23,48 @@
         .add-btn { padding: 12px 20px; background: var(--primary); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; }
         
         .subject-list { list-style: none; padding: 0; }
-        .subject-item { background: #fdfdfd; border: 1px solid #eee; margin-bottom: 15px; padding: 15px; border-radius: 12px; }
-        .subject-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .subject-name { font-weight: 800; font-size: 18px; color: #222; }
+        .subject-item { background: #fdfdfd; border: 1px solid #eee; margin-bottom: 20px; padding: 20px; border-radius: 12px; border-left: 6px solid #ccc; }
+        .subject-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .subject-name { font-weight: 800; font-size: 18px; color: #222; display: flex; align-items: center; gap: 8px;}
+        .subject-badge { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
         .delete-btn { background: #ffeded; color: #ff5c5c; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight:bold; }
         
-        .action-group { display: flex; gap: 5px; margin-bottom: 5px; }
+        /* Progress Bar */
+        .progress-container { margin-bottom: 15px; }
+        .progress-text { font-size: 12px; color: #666; margin-bottom: 5px; font-weight: bold; display: flex; justify-content: space-between; }
+        .progress-bar-bg { width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s; }
+
+        .action-group { display: flex; gap: 8px; margin-bottom: 8px; }
         .file-label, .paste-btn { flex: 1; background: #f0f7ff; color: #4a90e2; padding: 8px; text-align: center; border-radius: 8px; font-size: 13px; cursor: pointer; border: 1px dashed #4a90e2; font-weight:bold; }
         .paste-btn { background: #fff4e6; color: #fd7e14; border-color: #fd7e14; }
-        .study-btn { flex: 1; background: #4a90e2; color: white; padding: 8px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight:bold; display: none; }
+        .study-btn { flex: 1; color: white; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight:bold; display: none; text-align: center; }
         input[type="file"] { display: none; }
 
+        /* Modal Styles */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); color: white; justify-content: center; align-items: center; z-index: 1000; flex-direction: column; padding: 20px; box-sizing: border-box;}
-        .close-btn { position: absolute; top: 20px; right: 30px; font-size: 40px; cursor: pointer; color: white; z-index: 1010; transition: transform 0.2s;}
+        .close-btn { position: absolute; top: 20px; right: 30px; font-size: 40px; cursor: pointer; color: white; z-index: 1010; }
 
         .paste-modal-content { background: white; width: 90%; max-width: 500px; padding: 20px; border-radius: 16px; color: #333; display: flex; flex-direction: column; gap: 15px; }
         .paste-modal-content textarea { width: 100%; height: 250px; border: 1px solid #ddd; border-radius: 8px; padding: 10px; font-family: monospace; font-size: 14px; resize: none; box-sizing: border-box; }
         .save-btn { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; }
 
-        .notebook { background: #eef1f5; width: 95%; max-width: 900px; height: 85vh; overflow-y: auto; border-radius: 20px; padding: 30px; box-sizing: border-box; }
-        .note-item-block { background: white; border-radius: 16px; padding: 30px; margin-bottom: 25px; border-left: 8px solid #4a90e2; }
-        .note-title { font-size: 26px; font-weight: 900; color: #111; margin-bottom: 20px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; line-height: 1.4; }
-        .note-content { font-size: 19px; font-weight: 500; color: #333; line-height: 1.8; }
+        .notebook { background: #eef1f5; width: 95%; max-width: 900px; height: 85vh; overflow-y: auto; border-radius: 20px; padding: 30px; box-sizing: border-box; color: #333; }
+        .note-item-block { background: white; border-radius: 16px; padding: 30px; margin-bottom: 25px; border-left: 8px solid var(--primary); }
+        .note-title { font-size: 24px; font-weight: 900; color: #111; margin-bottom: 15px; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; }
+        .note-content { font-size: 17px; font-weight: 500; color: #333; line-height: 1.8; }
+        
         .text-red { color: #e84118; font-weight: 900; }
         .text-blue { color: #0097e6; font-weight: 900; }
         .text-hl { background-color: #fbc531; color: #111; font-weight: 900; padding: 2px 6px; border-radius: 4px; }
         .note-image { max-width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin: 15px 0; display: block; }
         .lewis-img { background: white; padding: 15px; border-radius: 12px; border: 1px solid #ddd; max-width: 80%; margin: 10px 0; }
         
-        .card-container { perspective: 1000px; width: 100%; max-width: 600px; min-height: 400px; margin-bottom: 20px; display: flex; align-items: stretch; }
+        /* Flashcard Styles */
+        .card-container { perspective: 1000px; width: 100%; max-width: 650px; min-height: 450px; margin-bottom: 20px; display: flex; align-items: stretch; }
         .card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; cursor: pointer; display: flex; align-items: stretch;}
         .card-inner.is-flipped { transform: rotateY(180deg); }
-        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; justify-content: center; align-items: center; border-radius: 20px; font-size: 22px; font-weight: bold; padding: 40px; box-sizing: border-box; background: white; color: #333; box-shadow: 0 10px 30px rgba(0,0,0,0.2); flex-direction: column; line-height: 1.5; overflow-y: auto;}
+        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; justify-content: center; align-items: center; border-radius: 20px; font-size: 20px; font-weight: bold; padding: 40px; box-sizing: border-box; background: white; color: #333; box-shadow: 0 10px 30px rgba(0,0,0,0.2); flex-direction: column; line-height: 1.5; overflow-y: auto;}
         .card-back { transform: rotateY(180deg); background: #f8fbff; border: 4px solid var(--primary); }
         
         .quiz-type-badge { font-size: 13px; color: white; background: #888; padding: 4px 10px; border-radius: 20px; position: absolute; top: 20px; left: 20px; font-weight: bold; }
@@ -61,11 +74,18 @@
         .mcq-options { display: flex; flex-direction: column; gap: 10px; margin-top: 25px; width: 100%; }
         .mcq-btn { width: 100%; padding: 15px; background: #f8f9fa; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; cursor: pointer; text-align: left; transition: all 0.2s; font-weight: 600; color: #333; }
         .mcq-btn:hover { background: #e3f2fd; border-color: #4a90e2; }
+        .mcq-btn.correct { background: #d4edda; border-color: #28a745; color: #155724; }
+        .mcq-btn.wrong { background: #f8d7da; border-color: #dc3545; color: #721c24; }
         
+        .feedback-text { margin-top: 15px; font-size: 18px; font-weight: bold; border-radius: 8px; padding: 10px;}
+        .feedback-text.correct { color: #28a745; background: #e8f5e9; }
+        .feedback-text.wrong { color: #dc3545; background: #ffebee; }
+
         .nav-btns { display: flex; gap: 20px; }
         .nav-btns button { padding: 15px 35px; border-radius: 12px; border: none; cursor: pointer; background: var(--primary); color: white; font-weight: 900; font-size: 18px;}
 
-        .ai-tutor-btn { position: fixed; bottom: 30px; right: 30px; background: #2b3137; color: white; width: 65px; height: 65px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 28px; cursor: pointer; z-index: 100; border: none; }
+        /* AI Tutor */
+        .ai-tutor-btn { position: fixed; bottom: 30px; right: 30px; background: #2b3137; color: white; width: 65px; height: 65px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 28px; cursor: pointer; z-index: 100; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.3);}
         .chat-window { display: none; position: fixed; bottom: 110px; right: 30px; width: 380px; height: 550px; background: white; border-radius: 16px; box-shadow: 0 15px 40px rgba(0,0,0,0.2); z-index: 100; flex-direction: column; overflow: hidden; border: 1px solid #ddd; }
         .chat-header { background: #2b3137; color: white; padding: 15px 20px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         .chat-body { flex: 1; padding: 20px; overflow-y: auto; background: #fdfdfd; display: flex; flex-direction: column; gap: 12px; font-size: 15px; }
@@ -77,10 +97,10 @@
 <body>
 
 <div class="container">
-    <h2>🚀 스마트 학습 관리자</h2>
+    <h2>🚀 스마트 학습 관리자 (전과목)</h2>
     <div id="loadingState" style="text-align: center; color: #888; font-size: 14px; margin-bottom: 10px; display: none;">🔄 동기화 중...</div>
     <div class="input-group">
-        <input type="text" id="subjectInput" placeholder="과목 입력 (예: 화학I)" onkeypress="if(event.key==='Enter')addSubject()">
+        <input type="text" id="subjectInput" placeholder="과목 입력 (예: 화학I, 미적분, 세계사)" onkeypress="if(event.key==='Enter')addSubject()">
         <button class="add-btn" onclick="addSubject()">과목 추가</button>
     </div>
     <ul class="subject-list" id="subjectList"></ul>
@@ -88,14 +108,16 @@
 
 <div id="studyArea" class="modal">
     <span class="close-btn" onclick="closeStudy()">&times;</span>
-    <div id="modeTitle" style="margin-bottom: 15px; font-size: 20px; color: #ddd; font-weight:900;"></div>
+    <div id="modeTitle" style="margin-bottom: 15px; font-size: 22px; color: #ddd; font-weight:900;"></div>
+    
     <div id="noteDisplay" class="notebook" style="display: none;"></div>
     
     <div id="flashcardDisplay" class="card-container" style="display: none;">
-        <div class="card-inner" id="cardInner" onclick="flipCard()">
+        <div class="card-inner" id="cardInner" onclick="handleCardClick()">
             <div class="card-face card-front">
                 <div id="quizBadge" class="quiz-type-badge">Q. 문제</div>
                 <div id="cardFrontContent" style="width: 100%;"></div>
+                <div id="frontFeedback" style="display:none; width:100%;"></div>
             </div>
             <div class="card-face card-back">
                 <div class="quiz-type-badge" style="background:#4a90e2;">A. 정답/해설</div>
@@ -123,9 +145,9 @@
 
 <button class="ai-tutor-btn" onclick="toggleChat()">🤖</button>
 <div class="chat-window" id="chatWindow">
-    <div class="chat-header"><span>🤖 AI 질문 튜터</span><span class="chat-close" onclick="toggleChat()">&times;</span></div>
+    <div class="chat-header"><span>🤖 AI 질문 튜터</span><span class="chat-close" style="cursor:pointer;" onclick="toggleChat()">&times;</span></div>
     <div style="padding:10px; background:#f8f9fa; border-bottom:1px solid #eee;"><input type="password" id="geminiApiKey" style="width:100%; padding:8px; box-sizing:border-box;" placeholder="Gemini API Key 입력"></div>
-    <div class="chat-body" id="chatBody"><div class="msg bot">질문을 입력하세요!</div></div>
+    <div class="chat-body" id="chatBody"><div class="msg bot">모르는 수학 공식이나 과학 개념이 있다면 물어보세요!</div></div>
     <div style="display:flex; padding:15px; background:white; border-top:1px solid #eee; gap:10px;">
         <input type="text" id="chatMessage" style="flex:1; padding:10px; border:1px solid #ddd; border-radius:8px;" placeholder="질문..." onkeypress="if(event.key==='Enter')sendMessage()">
         <button onclick="sendMessage()" style="padding:10px 15px; background:#4a90e2; color:white; border:none; border-radius:8px;">전송</button>
@@ -133,6 +155,7 @@
 </div>
 
 <script>
+    // --- Firebase Configuration ---
     const firebaseConfig = {
         apiKey: "AIzaSyCTUv3jOEX_SNROCR5s0r3_q9QoZ1aW91w",
         authDomain: "study-97499.firebaseapp.com",
@@ -140,21 +163,26 @@
         projectId: "study-97499",
         storageBucket: "study-97499.firebasestorage.app",
         messagingSenderId: "381744064476",
-        appId: "1:381744064476:web:3b6250871638feb0a01119",
-        measurementId: "G-NB1DLK7RBG"
+        appId: "1:381744064476:web:3b6250871638feb0a01119"
     };
 
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
     const dbRef = database.ref('tamin_study_data/subjects');
-    const WOLFRAM_APP_ID = "VPY5J4-VWJP"; // 제공하신 API 적용
+    const WOLFRAM_APP_ID = "VPY5J4-VWJP";
 
+    // --- Global Variables ---
     let subjects = {}; 
     let currentData = [];
     let currentIndex = 0;
     let targetSubject = "";
     let targetType = "";
+    let isWrongNoteMode = false;
+    
+    // 과목별 랜덤 테마 컬러
+    const themeColors = ['#ff7675', '#74b9ff', '#55efc4', '#ffeaa7', '#a29bfe', '#fd79a8', '#00b894', '#0984e3'];
 
+    // --- Init & Data Loading ---
     document.getElementById('loadingState').style.display = 'block';
     dbRef.once('value').then((snapshot) => {
         document.getElementById('loadingState').style.display = 'none';
@@ -168,37 +196,86 @@
         const input = document.getElementById('subjectInput');
         const name = input.value.trim();
         if (!name) return;
-        if (!subjects[name]) { subjects[name] = { memo: null, quiz: null }; renderList(); saveToFirebase(); }
+        if (!subjects[name]) { 
+            const randColor = themeColors[Math.floor(Math.random() * themeColors.length)];
+            subjects[name] = { memo: null, quiz: null, color: randColor }; 
+            renderList(); 
+            saveToFirebase(); 
+        }
         input.value = "";
     }
 
-    function deleteSubject(name) { if(confirm(`${name}을 삭제할까요?`)) { delete subjects[name]; renderList(); saveToFirebase(); } }
+    function deleteSubject(name) { 
+        if(confirm(`${name}을 삭제할까요?`)) { 
+            delete subjects[name]; 
+            renderList(); 
+            saveToFirebase(); 
+        } 
+    }
 
+    // --- Rendering UI ---
     function renderList() {
         const list = document.getElementById('subjectList');
         list.innerHTML = "";
+        
         for (let name in subjects) {
+            const subj = subjects[name];
+            const color = subj.color || '#4a90e2'; // 레거시 데이터 호환성 유지
+            
+            // 정답률/진도율 계산 (퀴즈 데이터가 있을 경우)
+            let progressHTML = "";
+            let wrongCount = 0;
+            if (subj.quiz && Array.isArray(subj.quiz)) {
+                const total = subj.quiz.length;
+                const solved = subj.quiz.filter(q => q.status === 'correct' || q.status === 'wrong').length;
+                const correct = subj.quiz.filter(q => q.status === 'correct').length;
+                wrongCount = subj.quiz.filter(q => q.status === 'wrong').length;
+                
+                const percentage = total === 0 ? 0 : Math.round((correct / total) * 100);
+                
+                progressHTML = `
+                    <div class="progress-container">
+                        <div class="progress-text">
+                            <span>🎯 정답률</span>
+                            <span>${correct} / ${total} (${percentage}%)</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" style="width: ${percentage}%; background-color: ${color}"></div>
+                        </div>
+                    </div>
+                `;
+            }
+
             const li = document.createElement('li');
             li.className = 'subject-item';
+            li.style.borderLeftColor = color;
             li.innerHTML = `
-                <div class="subject-header"><span class="subject-name">${name}</span><button class="delete-btn" onclick="deleteSubject('${name}')">삭제</button></div>
+                <div class="subject-header">
+                    <span class="subject-name">
+                        <span class="subject-badge" style="background:${color}"></span> ${name}
+                    </span>
+                    <button class="delete-btn" onclick="deleteSubject('${name}')">삭제</button>
+                </div>
+                ${progressHTML}
                 <div class="action-group">
-                    <label class="file-label">📂 암기노트 파일 <input type="file" onchange="loadFile(event, '${name}', 'memo')"></label>
-                    <div class="paste-btn" onclick="openPasteModal('${name}', 'memo')">📋 복붙하기</div>
+                    <label class="file-label">📂 암기노트 <input type="file" onchange="loadFile(event, '${name}', 'memo')"></label>
+                    <div class="paste-btn" onclick="openPasteModal('${name}', 'memo')">📋 노트 복붙</div>
                 </div>
                 <div class="action-group">
-                    <label class="file-label">📝 퀴즈 파일 <input type="file" onchange="loadFile(event, '${name}', 'quiz')"></label>
-                    <div class="paste-btn" onclick="openPasteModal('${name}', 'quiz')">📋 복붙하기</div>
+                    <label class="file-label">📝 퀴즈추가 <input type="file" onchange="loadFile(event, '${name}', 'quiz')"></label>
+                    <div class="paste-btn" onclick="openPasteModal('${name}', 'quiz')">📋 퀴즈 복붙</div>
                 </div>
-                <div class="action-group">
-                    <button id="btn-memo-${name}" class="study-btn" style="background:#00b894; ${subjects[name].memo ? 'display:block' : ''}" onclick="startStudy('${name}', 'memo')">📖 노트</button>
-                    <button id="btn-quiz-${name}" class="study-btn" style="background:#e17055; ${subjects[name].quiz ? 'display:block' : ''}" onclick="startStudy('${name}', 'quiz')">🔄 퀴즈</button>
+                <div class="action-group" style="margin-top:10px;">
+                    <button class="study-btn" style="background:#00b894; ${subj.memo ? 'display:block' : ''}" onclick="startStudy('${name}', 'memo')">📖 노트 열기</button>
+                    <button class="study-btn" style="background:${color}; ${subj.quiz ? 'display:block' : ''}" onclick="startStudy('${name}', 'quiz')">🔄 전체 퀴즈</button>
+                    ${wrongCount > 0 ? `<button class="study-btn" style="background:#d63031; display:block;" onclick="startWrongNote('${name}')">🚨 오답 노트 (${wrongCount})</button>` : ''}
                 </div>
             `;
             list.appendChild(li);
         }
     }
 
+    // --- File & Paste Handling ---
     function loadFile(event, name, type) {
         const file = event.target.files[0];
         if (!file) return;
@@ -227,30 +304,52 @@
     function handleDataSave(name, type, rawData) {
         try {
             const parsed = JSON.parse(rawData);
-            subjects[name][type] = parsed;
+            
+            // 기존 데이터에 이어붙이거나 새로 저장
+            if(type === 'quiz' && subjects[name][type]) {
+                subjects[name][type] = subjects[name][type].concat(parsed);
+            } else {
+                subjects[name][type] = parsed;
+            }
+            
             alert("저장되었습니다!");
             renderList();
             saveToFirebase();
-        } catch (e) { alert("올바른 JSON 형식이 아닙니다. 코드를 전체 복사했는지 확인해 주세요."); }
+        } catch (e) { 
+            alert("올바른 JSON 형식이 아닙니다. 괄호나 따옴표를 확인해 주세요.\n\n에러 내용: " + e.message); 
+        }
     }
 
-    // 텍스트 파싱 핵심 함수 (루이스 태그 추가됨)
+    // --- Core Parsing ---
     function parseText(text) {
         if(!text) return "";
         return text.replace(/\{이미지:(.*?)\}/g, '<img src="$1" class="note-image">')
-                   // {루이스:분자식} -> WolframAlpha API로 변환 (비공유전자쌍 포함)
-                   .replace(/\{루이스:(.*?)\}/g, `<img src="https://api.wolframalpha.com/v1/simple?appid=${WOLFRAM_APP_ID}&i=lewis+structure+of+$1" class="lewis-img" alt="$1 Lewis Structure">`)
+                   .replace(/\{루이스:(.*?)\}/g, `<img src="https://api.wolframalpha.com/v1/simple?appid=${WOLFRAM_APP_ID}&i=lewis+structure+of+$1" class="lewis-img" alt="$1 Lewis">`)
                    .replace(/\{빨강:(.*?)\}/g, '<span class="text-red">$1</span>')
                    .replace(/\{파랑:(.*?)\}/g, '<span class="text-blue">$1</span>')
                    .replace(/\{형광:(.*?)\}/g, '<span class="text-hl">$1</span>')
                    .replace(/\n/g, '<br>');
     }
 
+    // --- Study & Quiz Logic ---
     function startStudy(name, type) {
+        isWrongNoteMode = false;
         currentData = subjects[name][type];
+        targetSubject = name;
+        initStudyUI(name, type, "전체");
+    }
+
+    function startWrongNote(name) {
+        isWrongNoteMode = true;
+        currentData = subjects[name].quiz.filter(q => q.status === 'wrong');
+        targetSubject = name;
+        initStudyUI(name, 'quiz', "🚨 오답노트");
+    }
+
+    function initStudyUI(name, type, titleSuffix) {
         currentIndex = 0;
         document.getElementById('studyArea').style.display = 'flex';
-        document.getElementById('modeTitle').textContent = `[${name}] ${type==='memo'?'노트':'퀴즈'}`;
+        document.getElementById('modeTitle').textContent = `[${name}] ${type==='memo'?'노트':'퀴즈'} (${titleSuffix})`;
         
         if (type === 'memo') {
             document.getElementById('flashcardDisplay').style.display = 'none';
@@ -259,6 +358,10 @@
             noteArea.style.display = 'block';
             noteArea.innerHTML = currentData.map(item => `<div class="note-item-block"><div class="note-title">${parseText(item.title)}</div><div class="note-content">${parseText(item.content)}</div></div>`).join('');
             document.getElementById('progress').style.display = 'none';
+            
+            // 렌더링 후 MathJax 수식 변환 (비동기)
+            if (window.MathJax) MathJax.typesetPromise();
+
         } else {
             document.getElementById('noteDisplay').style.display = 'none';
             document.getElementById('flashcardDisplay').style.display = 'flex';
@@ -271,37 +374,120 @@
     function showCardItem() {
         const item = currentData[currentIndex];
         document.getElementById('cardInner').classList.remove('is-flipped');
+        document.getElementById('frontFeedback').style.display = 'none';
         
         let frontHTML = `<div>${parseText(item.question)}</div>`;
         let badge = document.getElementById('quizBadge');
         
-        if (item.type === 'multiple_choice' && item.options) {
+        // JSON에 type이 명시 안된 경우 단답형으로 간주
+        const qType = item.type || 'short_answer'; 
+
+        if (qType === 'multiple_choice' && item.options) {
             badge.textContent = '🔢 객관식';
             badge.className = 'quiz-type-badge quiz-type-mcq';
             frontHTML += `<div class="mcq-options">`;
             item.options.forEach((opt, idx) => {
-                frontHTML += `<button class="mcq-btn">${idx + 1}. ${parseText(opt)}</button>`;
+                // 이미 푼 문제의 상태(status)에 따라 클래스 부여
+                let btnClass = "mcq-btn";
+                if(item.status === 'correct' && idx === item.correct_answer) btnClass += " correct";
+                if(item.status === 'wrong' && item.last_selected === idx) btnClass += " wrong";
+                
+                // 이벤트 버블링(stopPropagation)을 막아 버튼 클릭 시 카드가 뒤집히지 않게 함
+                frontHTML += `<button class="${btnClass}" onclick="event.stopPropagation(); checkAnswer(${idx})">${idx + 1}. ${parseText(opt)}</button>`;
             });
-            frontHTML += `</div>`;
-        } else if (item.type === 'descriptive') {
+            frontHTML += `</div><div style="margin-top:15px; font-size:14px; color:#888;">👆 정답을 선택하세요</div>`;
+        } else if (qType === 'descriptive') {
             badge.textContent = '✍️ 서술형';
             badge.className = 'quiz-type-badge quiz-type-desc';
+            frontHTML += `<div style="margin-top:25px; font-size:14px; color:#888;">👆 카드를 클릭해 정답을 확인하세요</div>`;
         } else {
             badge.textContent = '⚡ 단답형';
             badge.className = 'quiz-type-badge';
+            frontHTML += `<div style="margin-top:25px; font-size:14px; color:#888;">👆 카드를 클릭해 정답을 확인하세요</div>`;
         }
 
         document.getElementById('cardFrontContent').innerHTML = frontHTML;
-        document.getElementById('cardBackContent').innerHTML = parseText(item.answer);
+        document.getElementById('cardBackContent').innerHTML = parseText(item.answer || item.explanation || "해설이 없습니다.");
         document.getElementById('progress').textContent = `[ ${currentIndex + 1} / ${currentData.length} ]`;
+
+        // 렌더링 후 MathJax 실행
+        if (window.MathJax) MathJax.typesetPromise();
     }
 
-    function flipCard() { document.getElementById('cardInner').classList.toggle('is-flipped'); }
-    function nextItem() { if (currentIndex < currentData.length - 1) { currentIndex++; showCardItem(); } }
-    function prevItem() { if (currentIndex > 0) { currentIndex--; showCardItem(); } }
-    function closeStudy() { document.getElementById('studyArea').style.display = 'none'; }
+    // 객관식 정답 체크 로직
+    function checkAnswer(selectedIdx) {
+        let item = currentData[currentIndex];
+        
+        // JSON에 correct_answer 인덱스 번호가 있어야 동작함
+        if (item.correct_answer === undefined) {
+            flipCard();
+            return; 
+        }
 
-    function toggleChat() { const c = document.getElementById('chatWindow'); c.style.display = c.style.display==='flex'?'none':'flex'; }
+        const isCorrect = (selectedIdx === item.correct_answer);
+        item.status = isCorrect ? 'correct' : 'wrong';
+        item.last_selected = selectedIdx; // 사용자가 고른 오답 기록
+
+        // 즉시 화면 반영을 위해 다시 렌더링
+        showCardItem(); 
+
+        const feedbackDiv = document.getElementById('frontFeedback');
+        feedbackDiv.style.display = 'block';
+        
+        if (isCorrect) {
+            feedbackDiv.innerHTML = `<div class="feedback-text correct">🎉 정답입니다! (클릭하여 해설 보기)</div>`;
+            // 오답 노트 모드였다면, 원본 데이터베이스에서도 맞춘 것으로 갱신해야 함
+            updateOriginalQuizStatus(item.question, 'correct');
+        } else {
+            feedbackDiv.innerHTML = `<div class="feedback-text wrong">❌ 오답입니다. 오답노트에 추가됩니다. (클릭하여 해설 보기)</div>`;
+            updateOriginalQuizStatus(item.question, 'wrong');
+        }
+
+        saveToFirebase();
+        renderList(); // 백그라운드에서 진도율 바 업데이트
+    }
+
+    // 원본 데이터 동기화 (오답 노트 모드일 때 참조를 맞추기 위함)
+    function updateOriginalQuizStatus(questionText, newStatus) {
+        const originalQuizArray = subjects[targetSubject].quiz;
+        const targetQ = originalQuizArray.find(q => q.question === questionText);
+        if(targetQ) targetQ.status = newStatus;
+    }
+
+    // 카드 클릭 시 (객관식이 아니거나, 정답 확인 후 해설 볼 때)
+    function handleCardClick() {
+        flipCard();
+    }
+
+    function flipCard() { 
+        document.getElementById('cardInner').classList.toggle('is-flipped'); 
+    }
+
+    function nextItem() { 
+        if (currentIndex < currentData.length - 1) { 
+            currentIndex++; 
+            showCardItem(); 
+        } 
+    }
+    
+    function prevItem() { 
+        if (currentIndex > 0) { 
+            currentIndex--; 
+            showCardItem(); 
+        } 
+    }
+    
+    function closeStudy() { 
+        document.getElementById('studyArea').style.display = 'none'; 
+        // 오답노트 풀다 나가면 리스트 최신화
+        renderList(); 
+    }
+
+    // --- AI Chat Logic ---
+    function toggleChat() { 
+        const c = document.getElementById('chatWindow'); 
+        c.style.display = c.style.display === 'flex' ? 'none' : 'flex'; 
+    }
     
     async function sendMessage() {
         const key = document.getElementById('geminiApiKey').value.trim();
@@ -325,7 +511,10 @@
             document.getElementById(loadingId).remove();
 
             if (res.ok) {
-                body.innerHTML += `<div class="msg bot">${data.candidates[0].content.parts[0].text.replace(/\n/g, '<br>')}</div>`;
+                // AI 답변도 MathJax로 렌더링될 수 있도록 처리
+                let answerText = data.candidates[0].content.parts[0].text.replace(/\n/g, '<br>');
+                body.innerHTML += `<div class="msg bot ai-response">${answerText}</div>`;
+                if (window.MathJax) MathJax.typesetPromise();
             } else {
                 body.innerHTML += `<div class="msg bot">⚠️ 에러: ${data.error.message}</div>`;
             }
