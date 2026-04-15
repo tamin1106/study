@@ -60,11 +60,43 @@
         .note-image { max-width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin: 15px 0; display: block; }
         .lewis-img { background: white; padding: 15px; border-radius: 12px; border: 1px solid #ddd; max-width: 80%; margin: 10px 0; }
         
-        /* Flashcard Styles */
-        .card-container { perspective: 1000px; width: 100%; max-width: 650px; min-height: 450px; margin-bottom: 20px; display: flex; align-items: stretch; }
+        /* Flashcard Styles (수정됨) */
+        .card-container { 
+            perspective: 1000px; 
+            width: 100%; 
+            max-width: 650px; 
+            height: 65vh; 
+            min-height: 450px; 
+            margin-bottom: 20px; 
+            display: flex; 
+            align-items: stretch; 
+        }
         .card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; cursor: pointer; display: flex; align-items: stretch;}
         .card-inner.is-flipped { transform: rotateY(180deg); }
-        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; justify-content: center; align-items: center; border-radius: 20px; font-size: 20px; font-weight: bold; padding: 40px; box-sizing: border-box; background: white; color: #333; box-shadow: 0 10px 30px rgba(0,0,0,0.2); flex-direction: column; line-height: 1.5; overflow-y: auto;}
+        
+        /* 글자 잘림, 위로 밀림 방지 및 줄바꿈 적용 */
+        .card-face { 
+            position: absolute; 
+            width: 100%; 
+            height: 100%; 
+            backface-visibility: hidden; 
+            display: flex; 
+            justify-content: flex-start; /* center에서 변경 */
+            align-items: center; 
+            border-radius: 20px; 
+            font-size: 20px; 
+            font-weight: bold; 
+            padding: 75px 30px 40px 30px; /* 상단 여백 증가로 배지 겹침 방지 */
+            box-sizing: border-box; 
+            background: white; 
+            color: #333; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
+            flex-direction: column; 
+            line-height: 1.5; 
+            overflow-y: auto; 
+            word-break: keep-all; 
+            overflow-wrap: break-word; 
+        }
         .card-back { transform: rotateY(180deg); background: #f8fbff; border: 4px solid var(--primary); }
         
         .quiz-type-badge { font-size: 13px; color: white; background: #888; padding: 4px 10px; border-radius: 20px; position: absolute; top: 20px; left: 20px; font-weight: bold; }
@@ -72,7 +104,25 @@
         .quiz-type-desc { background: #9c27b0; }
         
         .mcq-options { display: flex; flex-direction: column; gap: 10px; margin-top: 25px; width: 100%; }
-        .mcq-btn { width: 100%; padding: 15px; background: #f8f9fa; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; cursor: pointer; text-align: left; transition: all 0.2s; font-weight: 600; color: #333; }
+        
+        /* 객관식 버튼 텍스트 넘침 방지 */
+        .mcq-btn { 
+            width: 100%; 
+            padding: 15px; 
+            background: #f8f9fa; 
+            border: 2px solid #e0e0e0; 
+            border-radius: 12px; 
+            font-size: 16px; 
+            cursor: pointer; 
+            text-align: left; 
+            transition: all 0.2s; 
+            font-weight: 600; 
+            color: #333; 
+            box-sizing: border-box;
+            word-break: keep-all; 
+            overflow-wrap: break-word; 
+            line-height: 1.4; 
+        }
         .mcq-btn:hover { background: #e3f2fd; border-color: #4a90e2; }
         .mcq-btn.correct { background: #d4edda; border-color: #28a745; color: #155724; }
         .mcq-btn.wrong { background: #f8d7da; border-color: #dc3545; color: #721c24; }
